@@ -1,0 +1,125 @@
+package com.example.prova
+
+import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.google.gson.Gson
+
+data class Produto(
+    val nome: String,
+    val categoria: String,
+    val preco: Double,
+    val quantidade: Int)
+
+object Estoque {
+    val produtos = mutableListOf<Produto>()
+
+    fun adicionarProduto(produto: Produto) {
+        produtos.add(produto)
+    }
+}
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            val navController = rememberNavController()
+            NavHost(navController, startDestination = "cadastroProduto") {
+                composable("cadastroProduto") { CadastroProdutos(navController) }
+                composable("listaProdutos") { ListaProdutos(navController) }
+                composable("detalhesProduto/{produto}") { backStackEntry ->
+                    val produtoJson = backStackEntry.arguments?.getString("produto")
+                    val produto = Gson().fromJson(produtoJson, Produto::class.java)
+                    DetalhesProduto(produto, navController)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CadastroProdutos(navController: NavController) {
+    var nomeProduto by remember { mutableStateOf("") }
+    var categoria by remember { mutableStateOf("") }
+    var preco by remember { mutableStateOf("") }
+    var quantidade by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+
+    Column(modifier = Modifier.fillMaxSize().padding(18.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center) {
+
+        Text(text = "Cadastrar Produto")
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        TextField(modifier = Modifier.fillMaxWidth().padding(5.dp),
+            value = nomeProduto,
+            onValueChange = { nomeProduto = it },
+            label = { Text(text = "Nome do Produto") })
+
+        TextField(modifier = Modifier.fillMaxWidth().padding(5.dp),
+            value = categoria,
+            onValueChange = { categoria = it },
+            label = { Text(text = "Categoria") })
+
+        TextField(modifier = Modifier.fillMaxWidth().padding(5.dp),
+            value = preco,
+            onValueChange = { preco = it },
+            label = { Text(text = "Preço") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+
+        TextField(modifier = Modifier.fillMaxWidth().padding(5.dp),
+            value = quantidade,
+            onValueChange = { quantidade = it },
+            label = { Text(text = "Quantidade em Estoque") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Button(onClick = {
+            val precoValue = preco.toDoubleOrNull()
+            val quantidadeValue = quantidade.toIntOrNull()
+
+            if (nomeProduto.isNotEmpty() && categoria.isNotEmpty() && precoValue != null && quantidadeValue != null && quantidadeValue > 0 && precoValue >= 0) {
+                Estoque.adicionarProduto(Produto(nomeProduto, categoria, precoValue, quantidadeValue))
+                Toast.makeText(context, "Produto salvo!", Toast.LENGTH_SHORT).show()
+
+                nomeProduto = ""
+                categoria = ""
+                preco = ""
+                quantidade = ""
+
+                navController.navigate("listaProdutos")
+            } else {
+                Toast.makeText(context, "Preencha todos os campos corretamente", Toast.LENGTH_SHORT).show()
+            }
+        }) {
+            Text(text="Salvar Produto")
+        }
+    }
+}
+@Preview(showBackground = true)
+@Composable
+fun ViewPreview() {
+    val navController = rememberNavController() 
+    CadastroProdutos(navController) 
+}
