@@ -1,0 +1,25 @@
+@Composable
+fun ListaProdutos(navController: NavController) {
+    // Obtém os produtos da lista estática
+    val produtos = Estoque.produtos
+
+    LazyColumn(modifier=Modifier.fillMaxSize().padding(16.dp)) {
+        items(produtos) { produto ->
+            Row(modifier=Modifier.fillMaxWidth(), horizontalArrangement=Arrangement.SpaceBetween) {
+                Text(text="${produto.nome} (${produto.quantidade} unidades)")
+                Button(onClick={ 
+                    navController.navigate("detalhesProduto/${Gson().toJson(produto)}")
+                }) {
+                    Text(text="Detalhes")
+                }
+            }
+            Spacer(modifier=Modifier.height(10.dp))
+        }
+
+        item {
+            Button(onClick={ navController.navigate("cadastroProduto") }) {
+                Text(text="Cadastrar Novo Produto")
+            }
+        }
+    }
+}
